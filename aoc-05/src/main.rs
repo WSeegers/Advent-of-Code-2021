@@ -1,9 +1,4 @@
-mod parser;
 use std::{collections::HashMap, iter};
-
-use itertools::Itertools;
-
-use crate::parser::parse_lines;
 
 enum Orientation {
     Horizontal,
