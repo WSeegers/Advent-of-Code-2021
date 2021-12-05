@@ -25,6 +25,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "aoc-04"
+version = "0.1.0"
+dependencies = [
+ "aoc-common",
+ "itertools",
+]
+
+[[package]]
 name = "aoc-common"
 version = "0.1.0"
 
