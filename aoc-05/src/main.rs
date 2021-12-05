@@ -1,4 +1,6 @@
-use std::{collections::HashMap, iter};
+use std::{collections::HashMap, iter, path::Path};
+
+use itertools::Itertools;
 
 enum Orientation {
     Horizontal,
@@ -9,35 +11,29 @@ enum Orientation {
 impl From<&[usize]> for Orientation {
     fn from(line: &[usize]) -> Self {
         match line {
-            _ if is_vertical(line) => Self::Vertical,
-            _ if is_horizontal(line) => Self::Horizontal,
+            _ if line[0] == line[2] => Self::Vertical,
+            _ if line[1] == line[3] => Self::Horizontal,
             _ => Self::Diagonal,
         }
     }
 }
 
-fn is_vertical(line: &[usize]) -> bool {
-    line[0] == line[2]
-}
-
-fn is_horizontal(line: &[usize]) -> bool {
-    line[1] == line[3]
-}
-
-fn part_1(path: &str) -> usize {
+fn load_input<P>(path: P) -> Vec<usize> where P: AsRef<Path>{
     let re = regex::Regex::new(r",| -> ").unwrap();
-    let mut summary = HashMap::<(usize, usize), usize>::new();
-
-    let input_raw = aoc_common::read_lines(path)
+    aoc_common::read_lines(path)
         .unwrap()
         .flat_map(|s| {
             re.split(&s.unwrap())
                 .map(|x| x.parse::<usize>().unwrap())
                 .collect::<Vec<usize>>()
         })
-        .collect::<Vec<_>>();
+        .collect()
+}
 
-    input_raw
+fn part_1(input: &[usize]) -> usize {
+    let mut summary = HashMap::<(usize, usize), usize>::new();
+
+    input
         .chunks(4)
         .flat_map(|line| match Orientation::from(line) {
             Orientation::Vertical => {
@@ -64,34 +60,27 @@ fn part_1(path: &str) -> usize {
         .count()
 }
 
-fn part_2(path: &str) -> usize {
-    let re = regex::Regex::new(r",| -> ").unwrap();
+fn part_2(input: &[usize]) -> usize {
     let mut summary = HashMap::<(usize, usize), usize>::new();
 
-    let input_raw = aoc_common::read_lines(path)
-        .unwrap()
-        .flat_map(|s| {
-            re.split(&s.unwrap())
-                .map(|x| x.parse::<usize>().unwrap())
-                .collect::<Vec<usize>>()
-        })
-        .collect::<Vec<_>>();
-
-    input_raw
-        .chunks(4)
-        .flat_map(|line| {
-            let mut line = [(line[0], line[1]), (line[2], line[3])];
+    input
+        .iter()
+        .tuples()
+        .flat_map(|(&x1, &y1, &x2, &y2)| {
+            let mut line = [(x1, y1), (x2, y2)];
             line.sort_by(|(x1, _), (x2, _)| x1.cmp(x2));
 
-            let range_x: Box<dyn Iterator<Item = usize>> = match line[0].0.cmp(&line[1].0) {
-                std::cmp::Ordering::Equal => Box::new(iter::repeat(line[0].0)),
-                _ => Box::new(line[0].0..=line[1].0),
+            let [(x1, y1), (x2, y2)] = line;
+
+            let range_x: Box<dyn Iterator<Item = usize>> = match x1.cmp(&x2) {
+                std::cmp::Ordering::Equal => Box::new(iter::repeat(x1)),
+                _ => Box::new(x1..=x2),
             };
 
-            let range_y: Box<dyn Iterator<Item = usize>> = match line[0].1.cmp(&line[1].1) {
-                std::cmp::Ordering::Less => Box::new(line[0].1..=line[1].1),
-                std::cmp::Ordering::Greater => Box::new((line[1].1..=line[0].1).rev()),
-                std::cmp::Ordering::Equal => Box::new(iter::repeat(line[0].1)),
+            let range_y: Box<dyn Iterator<Item = usize>> = match y1.cmp(&y2) {
+                std::cmp::Ordering::Less => Box::new(y1..=y2),
+                std::cmp::Ordering::Greater => Box::new((y2..=y1).rev()),
+                std::cmp::Ordering::Equal => Box::new(iter::repeat(y1)),
             };
 
             (range_x).zip(range_y).collect::<Vec<_>>()
@@ -109,8 +98,10 @@ fn part_2(path: &str) -> usize {
 }
 
 fn main() {
-    println!("{}", part_1("resources/aoc-05.input"));
-    println!("{}", part_2("resources/aoc-05.input"));
+    let input = load_input("resources/aoc-05.input");
+
+    println!("{}", part_1(&input));
+    println!("{}", part_2(&input));
 }
 
 #[cfg(test)]
@@ -120,7 +111,7 @@ mod tests {
     #[test]
     fn part_1_test() {
         let expected: usize = 5;
-        let actual = part_1("test.input");
+        let actual = part_1(&load_input("test.input"));
 
         assert_eq!(actual, expected);
     }
@@ -128,7 +119,7 @@ mod tests {
     #[test]
     fn part_2_test() {
         let expected: usize = 12;
-        let actual = part_2("test.input");
+        let actual = part_2(&load_input("test.input"));
 
         assert_eq!(actual, expected);
     }
