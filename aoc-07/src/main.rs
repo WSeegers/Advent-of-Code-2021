@@ -1,20 +1,4 @@
-use std::path::Path;
-
 use itertools::{Itertools, MinMaxResult};
-
-fn load_input<P>(path: P) -> Vec<i64>
-where
-    P: AsRef<Path>,
-{
-    aoc_common::read_lines(path)
-        .unwrap()
-        .next()
-        .unwrap()
-        .unwrap()
-        .split(',')
-        .map(|x| x.parse().unwrap())
-        .collect()
-}
 
 fn solve<T>(positions: &[i64], fuel_calc: T) -> i64
 where
@@ -25,12 +9,15 @@ where
         _ => panic!(),
     };
 
-    (min..max).map(|destination| {
-        positions
-            .iter()
-            .map(|&pos| fuel_calc((destination - pos).abs()))
-            .sum::<i64>()
-    }).min().unwrap()
+    (min..max)
+        .map(|destination| {
+            positions
+                .iter()
+                .map(|&pos| fuel_calc((destination - pos).abs()))
+                .sum::<i64>()
+        })
+        .min()
+        .unwrap()
 }
 
 // Part 1
@@ -44,7 +31,7 @@ fn exponential_fuel_calc(n: i64) -> i64 {
 }
 
 fn main() {
-    let input = load_input("resources/aoc-07.input");
+    let input = aoc_common::load_csv("resources/aoc-07.input", |x| x.parse().unwrap());
 
     println!("Part1: {}", solve(&input, linear_fuel_calc));
     println!("Part2: {}", solve(&input, exponential_fuel_calc));
